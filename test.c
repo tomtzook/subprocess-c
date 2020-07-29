@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <zconf.h>
+#include <string.h>
+
+#include "subprocess.h"
+
+
+int in_new_proc(void* param, size_t size) {
+    char* line;
+    size_t len = 0;
+    getline(&line, &len, stdin);
+
+    fprintf(stdout, "%s", line);
+    fprintf(stdout, "%s || %ld \n", param, size);
+
+    free(line);
+
+    return 0;
+}
+
+int main(int argc, char** argv) {
+    char buffer[64];
+
+    subprocess_def_t def = {
+            .entry_point = in_new_proc,
+            .param = "hello world",
+            .param_size = 12,
+            .stdin_pipe = PIPE,
+            .stdout_pipe = PIPE,
+            .stderr_pipe = PIPE
+    };
+    subprocess_run_t proc;
+
+    int result = subprocess_create(&def, &proc);
+    if (result) {
+        printf("Error starting subprocess %d\n", result);
+        return 1;
+    }
+    printf("child process %d\n", proc.pid);
+
+    strcpy(buffer, "hello from stdin\n");
+    write(proc.stdin_fd, buffer, strlen(buffer));
+
+    int exit_code;
+    result = subprocess_wait(&proc, &exit_code);
+    if (result < 0) {
+        printf("Error waiting for subprocess %d\n", result);
+    } else {
+        printf("Done waiting for subprocess %d, exit code %d\n", result, exit_code);
+    }
+
+    int read_c = read(proc.stdout_fd, buffer, 63);
+    buffer[read_c] = '\0';
+    printf("from child: %s", buffer);
+
+    subprocess_free(&proc);
+    return 0;
+}
+
