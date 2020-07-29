@@ -8,3 +8,6 @@ add_library(subprocess STATIC subprocess.c subprocess.h test.c)
 
 add_executable(test test.c)
 target_link_libraries(test subprocess)
+
+add_executable(test_shell test_shell.c)
+target_link_libraries(test_shell subprocess)

@@ -5,42 +5,27 @@
 
 #include "subprocess.h"
 
-
-int in_new_proc(void* param, size_t size) {
-    char* line;
-    size_t len = 0;
-    getline(&line, &len, stdin);
-
-    fprintf(stdout, "%s", line);
-    fprintf(stdout, "%s || %ld \n", param, size);
-
-    free(line);
-
-    return 0;
-}
-
 int main(int argc, char** argv) {
     char buffer[64];
 
-    subprocess_func_t def = {
-            .entry_point = in_new_proc,
-            .param = "hello world",
-            .param_size = 12,
-            .stdin_pipe = PIPE,
+    char* argv_[] = {"", "hello world", NULL};
+    char* envp_[] = {NULL};
+    subprocess_shell_t def = {
+            .path = "/bin/echo",
+            .argv = argv_,
+            .envp = envp_,
+            .stdin_pipe = NONE,
             .stdout_pipe = PIPE,
             .stderr_pipe = PIPE
     };
     subprocess_run_t proc;
 
-    int result = subprocess_create(&def, &proc);
+    int result = subprocess_create_shell(&def, &proc);
     if (result) {
         printf("Error starting subprocess %d\n", result);
         return 1;
     }
     printf("child process %d\n", proc.pid);
-
-    strcpy(buffer, "hello from stdin\n");
-    write(proc.stdin_fd, buffer, strlen(buffer));
 
     int exit_code;
     result = subprocess_wait(&proc, &exit_code);
