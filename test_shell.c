@@ -37,7 +37,11 @@ int main(int argc, char** argv) {
 
     int read_c = read(proc.stdout_fd, buffer, 63);
     buffer[read_c] = '\0';
-    printf("from child: %s", buffer);
+    printf("stdout: %s", buffer);
+
+    read_c = read(proc.stderr_fd, buffer, 63);
+    buffer[read_c] = '\0';
+    printf("stderr: %s", buffer);
 
     subprocess_free(&proc);
     return 0;
