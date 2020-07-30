@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
+#include <signal.h>
 
 #include "../subprocess.h"
 
@@ -26,24 +26,11 @@ int main(int argc, char** argv) {
     }
     printf("child process %d\n", proc.pid);
 
-    char input[64] = "hello\nworld\nhey hello";
-    char output[64];
-    size_t output_written;
-    char error[64];
-    size_t error_written;
-
-    result = subprocess_communicate(&proc,
-                input, strlen(input),
-                output, 64, &output_written,
-                error, 64, &error_written);
+    result = subprocess_kill(&proc, SIGTERM);
     if (result) {
-        printf("Error communicate %d\n", result);
-        // incase nothing was written, so we can make grep finish normally
+        printf("Failed to kill %d\n", result);
+        // kill failed, so we can make grep finish normally
         close(proc.stdin_fd);
-    } else {
-        printf("stdout: %.*s", (int) output_written, output);
-        printf("stderr: %.*s", (int) error_written, error);
-        printf("\n");
     }
 
     int exit_code;
@@ -51,12 +38,15 @@ int main(int argc, char** argv) {
     if (result < 0) {
         printf("Error waiting for subprocess %d\n", result);
     } else {
+        // this time we will see SUBPROCESS_WAIT_EXIT_SIGNAL
         printf("Done waiting for subprocess %d, exit code %d\n", result, exit_code);
     }
 
     subprocess_free(&proc);
     return 0;
 }
+
+
 
 
 

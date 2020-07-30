@@ -11,3 +11,6 @@ target_link_libraries(subprocess_example_shell_stdin subprocess)
 
 add_executable(subprocess_example_communicate example_communicate.c)
 target_link_libraries(subprocess_example_communicate subprocess)
+
+add_executable(subprocess_example_kill example_kill.c)
+target_link_libraries(subprocess_example_kill subprocess)

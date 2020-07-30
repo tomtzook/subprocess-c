@@ -181,14 +181,14 @@ int subprocess_communicate(subprocess_run_t* proc_run,
         void* error, size_t error_size, size_t* error_read) {
     int result = write(proc_run->stdin_fd, input, input_size);
     if (result < 0) {
-        return 1;
+        return errno;
     }
     close(proc_run->stdin_fd);
     proc_run->stdin_fd = -1;
 
     result = read(proc_run->stdout_fd, output, output_size);
     if (result < 0) {
-        return 2;
+        return errno;
     }
     if (NULL != output_read) {
         *output_read = result;
@@ -198,13 +198,21 @@ int subprocess_communicate(subprocess_run_t* proc_run,
 
     result = read(proc_run->stderr_fd, error, error_size);
     if (result < 0) {
-        return 3;
+        return errno;
     }
     if (NULL != error_read) {
         *error_read = result;
     }
     close(proc_run->stderr_fd);
     proc_run->stderr_fd = -1;
+
+    return 0;
+}
+
+int subprocess_kill(const subprocess_run_t* proc_run, int signal) {
+    if(kill(proc_run->pid, signal)) {
+        return errno;
+    }
 
     return 0;
 }
@@ -232,7 +240,7 @@ int subprocess_wait(const subprocess_run_t* proc_run, int* exit_code) {
             break;
         }
         if (WIFSIGNALED(status)) {
-            *exit_code = WSTOPSIG(status);
+            *exit_code = WTERMSIG(status);
             result = SUBPROCESS_WAIT_EXIT_SIGNAL;
             break;
         }
