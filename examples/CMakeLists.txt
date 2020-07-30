@@ -8,3 +8,6 @@ target_link_libraries(subprocess_example_shell subprocess)
 
 add_executable(subprocess_example_shell_stdin example_shell_stdin.c)
 target_link_libraries(subprocess_example_shell_stdin subprocess)
+
+add_executable(subprocess_example_communicate example_communicate.c)
+target_link_libraries(subprocess_example_communicate subprocess)

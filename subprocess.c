@@ -175,6 +175,40 @@ void subprocess_free(subprocess_run_t* proc_run) {
     }
 }
 
+int subprocess_communicate(subprocess_run_t* proc_run,
+        const void* input, size_t input_size,
+        void* output, size_t output_size, size_t* output_read,
+        void* error, size_t error_size, size_t* error_read) {
+    int result = write(proc_run->stdin_fd, input, input_size);
+    if (result < 0) {
+        return 1;
+    }
+    close(proc_run->stdin_fd);
+    proc_run->stdin_fd = -1;
+
+    result = read(proc_run->stdout_fd, output, output_size);
+    if (result < 0) {
+        return 2;
+    }
+    if (NULL != output_read) {
+        *output_read = result;
+    }
+    close(proc_run->stdout_fd);
+    proc_run->stdout_fd = -1;
+
+    result = read(proc_run->stderr_fd, error, error_size);
+    if (result < 0) {
+        return 3;
+    }
+    if (NULL != error_read) {
+        *error_read = result;
+    }
+    close(proc_run->stderr_fd);
+    proc_run->stderr_fd = -1;
+
+    return 0;
+}
+
 int subprocess_wait(const subprocess_run_t* proc_run, int* exit_code) {
     int result = 0;
     int status;

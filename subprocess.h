@@ -47,4 +47,9 @@ int subprocess_create_shell(const subprocess_shell_t* proc_def,
         subprocess_run_t* proc_run);
 void subprocess_free(subprocess_run_t* proc_run);
 
+int subprocess_communicate(subprocess_run_t* proc_run,
+        const void* input, size_t input_size,
+        void* output, size_t output_size, size_t* output_read,
+        void* error, size_t error_size, size_t* error_read);
+
 int subprocess_wait(const subprocess_run_t* proc_run, int* exit_code);
