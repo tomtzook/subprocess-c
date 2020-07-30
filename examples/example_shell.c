@@ -3,7 +3,7 @@
 #include <zconf.h>
 #include <string.h>
 
-#include "subprocess.h"
+#include "../subprocess.h"
 
 int main(int argc, char** argv) {
     char buffer[64];

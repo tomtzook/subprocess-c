@@ -3,11 +3,6 @@ project(subprocess C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_library(subprocess STATIC subprocess.c subprocess.h test.c)
+add_library(subprocess STATIC subprocess.c subprocess.h examples/example_func.c)
 
-
-add_executable(test test.c)
-target_link_libraries(test subprocess)
-
-add_executable(test_shell test_shell.c)
-target_link_libraries(test_shell subprocess)
+add_subdirectory(examples)

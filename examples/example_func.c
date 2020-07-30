@@ -3,7 +3,7 @@
 #include <zconf.h>
 #include <string.h>
 
-#include "subprocess.h"
+#include "../subprocess.h"
 
 
 int in_new_proc(void* param, size_t size) {
@@ -12,7 +12,7 @@ int in_new_proc(void* param, size_t size) {
     getline(&line, &len, stdin);
 
     fprintf(stdout, "%s", line);
-    fprintf(stdout, "%s || %ld \n", param, size);
+    fprintf(stdout, "%s || %ld \n", (char*)param, size);
 
     free(line);
 

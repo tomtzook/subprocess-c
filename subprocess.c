@@ -67,6 +67,8 @@ static int child_pipes(const subprocess_pipe_def_t* proc_def,
         // TODO: handle dup2 errors
         dup2(stderr_pipe[PIPE_WRITE], FD_STDERR);
     }
+
+    return 0;
 }
 
 static void parent_pipes(const subprocess_pipe_def_t* proc_def, subprocess_run_t* proc_run,
@@ -182,21 +184,22 @@ int subprocess_wait(const subprocess_run_t* proc_run, int* exit_code) {
         pid = waitpid(proc_run->pid, &status, 0);
         if (pid < 0) {
             if (ECHILD == errno) {
-                result = 2;
+                result = SUBPROCESS_WAIT_NO_CHILD;
             } else {
-                result = -1;
+                result = -errno;
             }
 
+            *exit_code = 0;
             break;
         }
         if (WIFEXITED(status)) {
             *exit_code = WEXITSTATUS(status);
-            result = 0;
+            result = SUBPROCESS_WAIT_EXIT_NORMAL;
             break;
         }
         if (WIFSIGNALED(status)) {
             *exit_code = WSTOPSIG(status);
-            result = 1;
+            result = SUBPROCESS_WAIT_EXIT_SIGNAL;
             break;
         }
     }

@@ -2,6 +2,10 @@
 
 #include <stddef.h>
 
+#define SUBPROCESS_WAIT_EXIT_NORMAL (0)
+#define SUBPROCESS_WAIT_EXIT_SIGNAL (1)
+#define SUBPROCESS_WAIT_NO_CHILD (2)
+
 typedef int (*subprocess_main_t)(void*, size_t);
 
 typedef enum {
