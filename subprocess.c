@@ -52,7 +52,7 @@ static int make_pipes(const subprocess_pipe_def_t* proc_def,
     return 1;
 }
 
-static int child_pipes(const subprocess_pipe_def_t* proc_def,
+static void child_pipes(const subprocess_pipe_def_t* proc_def,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
     if (PIPE == proc_def->stdin_pipe) {
         close(stdin_pipe[PIPE_WRITE]);
@@ -67,8 +67,6 @@ static int child_pipes(const subprocess_pipe_def_t* proc_def,
         // TODO: handle dup2 errors
         dup2(stderr_pipe[PIPE_WRITE], FD_STDERR);
     }
-
-    return 0;
 }
 
 static void parent_pipes(const subprocess_pipe_def_t* proc_def, subprocess_run_t* proc_run,
@@ -164,15 +162,9 @@ int subprocess_create_shell(const subprocess_shell_t* proc_def,
 }
 
 void subprocess_free(subprocess_run_t* proc_run) {
-    if (proc_run->stdin_fd >= 0) {
-        close(proc_run->stdin_fd);
-    }
-    if (proc_run->stdout_fd >= 0) {
-        close(proc_run->stdout_fd);
-    }
-    if (proc_run->stderr_fd >= 0) {
-        close(proc_run->stderr_fd);
-    }
+    subprocess_close_pipe(&proc_run->stdin_fd);
+    subprocess_close_pipe(&proc_run->stdout_fd);
+    subprocess_close_pipe(&proc_run->stderr_fd);
 }
 
 int subprocess_communicate(subprocess_run_t* proc_run,
@@ -183,8 +175,7 @@ int subprocess_communicate(subprocess_run_t* proc_run,
     if (result < 0) {
         return errno;
     }
-    close(proc_run->stdin_fd);
-    proc_run->stdin_fd = -1;
+    subprocess_close_pipe(&proc_run->stdin_fd);
 
     result = read(proc_run->stdout_fd, output, output_size);
     if (result < 0) {
@@ -193,8 +184,7 @@ int subprocess_communicate(subprocess_run_t* proc_run,
     if (NULL != output_read) {
         *output_read = result;
     }
-    close(proc_run->stdout_fd);
-    proc_run->stdout_fd = -1;
+    subprocess_close_pipe(&proc_run->stdout_fd);
 
     result = read(proc_run->stderr_fd, error, error_size);
     if (result < 0) {
@@ -203,8 +193,7 @@ int subprocess_communicate(subprocess_run_t* proc_run,
     if (NULL != error_read) {
         *error_read = result;
     }
-    close(proc_run->stderr_fd);
-    proc_run->stderr_fd = -1;
+    subprocess_close_pipe(&proc_run->stderr_fd);
 
     return 0;
 }
