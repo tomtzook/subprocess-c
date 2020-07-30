@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <zconf.h>
+#include <unistd.h>
 #include <string.h>
 
 #include "../subprocess.h"
