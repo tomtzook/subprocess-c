@@ -34,7 +34,7 @@ typedef struct {
 } subprocess_shell_t;
 
 typedef struct {
-    int pid;
+    pid_t pid;
 
     int stdin_fd;
     int stdout_fd;
