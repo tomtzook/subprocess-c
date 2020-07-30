@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     if (result) {
         printf("Failed to kill %d\n", result);
         // kill failed, so we can make grep finish normally
-        close(proc.stdin_fd);
+        subprocess_close_pipe(&proc.stdin_fd);
     }
 
     int exit_code;

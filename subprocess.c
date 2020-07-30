@@ -249,3 +249,9 @@ int subprocess_wait(const subprocess_run_t* proc_run, int* exit_code) {
     return result;
 }
 
+void subprocess_close_pipe(int* fd_ptr) {
+    if (*fd_ptr >= 0) {
+        close(*fd_ptr);
+        *fd_ptr = -1;
+    }
+}

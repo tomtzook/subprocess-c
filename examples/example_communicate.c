@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     if (result) {
         printf("Error communicate %d\n", result);
         // incase nothing was written, so we can make grep finish normally
-        close(proc.stdin_fd);
+        subprocess_close_pipe(&proc.stdin_fd);
     } else {
         printf("stdout: %.*s", (int) output_written, output);
         printf("stderr: %.*s", (int) error_written, error);

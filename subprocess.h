@@ -55,3 +55,5 @@ int subprocess_communicate(subprocess_run_t* proc_run,
 int subprocess_kill(const subprocess_run_t* proc_run, int signal);
 
 int subprocess_wait(const subprocess_run_t* proc_run, int* exit_code);
+
+void subprocess_close_pipe(int* fd_ptr);

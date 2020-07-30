@@ -30,8 +30,7 @@ int main(int argc, char** argv) {
     strcpy(buffer, "hello\nworld\nhey hello");
     write(proc.stdin_fd, buffer, strlen(buffer));
     // need to close to signal grep it's the end of the input
-    close(proc.stdin_fd);
-    proc.stdin_fd = -1;
+    subprocess_close_pipe(&proc.stdin_fd);
 
     int exit_code;
     result = subprocess_wait(&proc, &exit_code);
