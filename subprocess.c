@@ -20,9 +20,9 @@
 #define OP_IS_SHAREDMEM(op) (((op) & SUBPROCESS_OPTION_SHAREDMEM_ANON) != 0)
 
 
-static void close_pipe(int* pipe) {
-    close(pipe[0]);
-    close(pipe[1]);
+static void close_pipe(int pipe[2]) {
+    subprocess_close_pipe(&pipe[0]);
+    subprocess_close_pipe(&pipe[1]);
 }
 
 static int make_pipes(subprocess_options_t options,
@@ -117,9 +117,9 @@ int subprocess_create(const subprocess_def_t* proc_def,
 
     int result = 0;
 
-    int stdin_pipe[2] = {0};
-    int stdout_pipe[2] = {0};
-    int stderr_pipe[2] = {0};
+    int stdin_pipe[2] = {-1, -1};
+    int stdout_pipe[2] = {-1, -1};
+    int stderr_pipe[2] = {-1, -1};
 
     if (make_pipes(proc_def->options,
                    stdin_pipe, stdout_pipe, stderr_pipe)) {
@@ -162,9 +162,9 @@ int subprocess_create_func(const subprocess_func_t* proc_def,
 
     int result = 0;
 
-    int stdin_pipe[2] = {0};
-    int stdout_pipe[2] = {0};
-    int stderr_pipe[2] = {0};
+    int stdin_pipe[2] = {-1, -1};
+    int stdout_pipe[2] = {-1, -1};
+    int stderr_pipe[2] = {-1, -1};
 
     void* sharedmem = NULL;
     size_t sharedmem_size = 0;
