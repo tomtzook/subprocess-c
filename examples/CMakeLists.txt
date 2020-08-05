@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.10)
 add_executable(subprocess_example_func example_func.c)
 target_link_libraries(subprocess_example_func subprocess)
 
-add_executable(subprocess_example_shell example_shell.c)
+add_executable(subprocess_example_shell example_echo.c)
 target_link_libraries(subprocess_example_shell subprocess)
 
-add_executable(subprocess_example_shell_stdin example_shell_stdin.c)
+add_executable(subprocess_example_shell_stdin example_echo_stdin.c)
 target_link_libraries(subprocess_example_shell_stdin subprocess)
 
 add_executable(subprocess_example_communicate example_communicate.c)

@@ -93,43 +93,8 @@ static void parent_pipes(const subprocess_pipe_def_t* proc_def, subprocess_run_t
     }
 }
 
-
-
-int subprocess_create(const subprocess_func_t* proc_def,
-        subprocess_run_t* proc_run) {
-    int stdin_pipe[2] = {0};
-    int stdout_pipe[2] = {0};
-    int stderr_pipe[2] = {0};
-    if (make_pipes((subprocess_pipe_def_t*)proc_def,
-            stdin_pipe, stdout_pipe, stderr_pipe)) {
-        return 1;
-    }
-
-
-    pid_t pid = fork();
-    if (pid < 0) {
-        return 2;
-    }
-    if (0 == pid) {
-        // child
-        child_pipes((subprocess_pipe_def_t*)proc_def,
-                stdin_pipe, stdout_pipe, stderr_pipe);
-
-        int exit_code = proc_def->entry_point(proc_def->param, proc_def->param_size);
-        exit(exit_code);
-    } else {
-        // parent
-        proc_run->pid = pid;
-
-        parent_pipes((subprocess_pipe_def_t*)proc_def, proc_run,
-                stdin_pipe, stdout_pipe, stderr_pipe);
-    }
-
-    return 0;
-}
-
-int subprocess_create_shell(const subprocess_shell_t* proc_def,
-                            subprocess_run_t* proc_run) {
+int subprocess_create(const subprocess_def_t *proc_def,
+                      subprocess_run_t *proc_run) {
     int stdin_pipe[2] = {0};
     int stdout_pipe[2] = {0};
     int stderr_pipe[2] = {0};
@@ -150,6 +115,39 @@ int subprocess_create_shell(const subprocess_shell_t* proc_def,
 
         execve(proc_def->path, proc_def->argv, proc_def->envp);
         exit(errno);
+    } else {
+        // parent
+        proc_run->pid = pid;
+
+        parent_pipes((subprocess_pipe_def_t*)proc_def, proc_run,
+                     stdin_pipe, stdout_pipe, stderr_pipe);
+    }
+
+    return 0;
+}
+
+int subprocess_create_func(const subprocess_func_t *proc_def,
+                           subprocess_run_t *proc_run) {
+    int stdin_pipe[2] = {0};
+    int stdout_pipe[2] = {0};
+    int stderr_pipe[2] = {0};
+    if (make_pipes((subprocess_pipe_def_t*)proc_def,
+                   stdin_pipe, stdout_pipe, stderr_pipe)) {
+        return 1;
+    }
+
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        return 2;
+    }
+    if (0 == pid) {
+        // child
+        child_pipes((subprocess_pipe_def_t*)proc_def,
+                    stdin_pipe, stdout_pipe, stderr_pipe);
+
+        int exit_code = proc_def->entry_point(proc_def->param, proc_def->param_size);
+        exit(exit_code);
     } else {
         // parent
         proc_run->pid = pid;

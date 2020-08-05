@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     };
     subprocess_run_t proc;
 
-    int result = subprocess_create(&def, &proc);
+    int result = subprocess_create_func(&def, &proc);
     if (result) {
         printf("Error starting subprocess %d\n", result);
         return 1;

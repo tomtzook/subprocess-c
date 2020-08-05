@@ -8,7 +8,7 @@
 int main(int argc, char** argv) {
     char* argv_[] = {"", "hello", NULL};
     char* envp_[] = {NULL};
-    subprocess_shell_t def = {
+    subprocess_def_t def = {
             .path = "/bin/grep",
             .argv = argv_,
             .envp = envp_,
@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     };
     subprocess_run_t proc;
 
-    int result = subprocess_create_shell(&def, &proc);
+    int result = subprocess_create(&def, &proc);
     if (result) {
         printf("Error starting subprocess %d\n", result);
         return 1;
