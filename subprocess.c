@@ -99,7 +99,7 @@ static int make_sharedmem(const subprocess_func_t* proc_def, void** mem_ptr, siz
     if (SUBPROCESS_SHAREDMEM_ANONYMOUS == proc_def->sharedmem) {
         void* mem = mmap(NULL, proc_def->sharedmem_size, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
         if (NULL == mem) {
-            return -errno;
+            return 1;
         }
 
         *mem_ptr = mem;
@@ -116,18 +116,22 @@ int subprocess_create(const subprocess_def_t* proc_def,
                       subprocess_run_t* proc_run) {
     memset(proc_run, 0, sizeof(subprocess_run_t));
 
+    int result = 0;
+
     int stdin_pipe[2] = {0};
     int stdout_pipe[2] = {0};
     int stderr_pipe[2] = {0};
+
     if (make_pipes((subprocess_pipe_def_t*)proc_def,
                    stdin_pipe, stdout_pipe, stderr_pipe)) {
-        return 1;
+        result = SUBPROCESS_CREATE_ERROR_PIPE;
+        goto error;
     }
-
 
     pid_t pid = fork();
     if (pid < 0) {
-        return 2;
+        result = SUBPROCESS_CREATE_ERROR_FORK;
+        goto error;
     }
     if (0 == pid) {
         // child
@@ -145,6 +149,12 @@ int subprocess_create(const subprocess_def_t* proc_def,
     }
 
     return 0;
+error:
+    close_pipe(stdin_pipe);
+    close_pipe(stdout_pipe);
+    close_pipe(stderr_pipe);
+
+    return result;
 }
 
 int subprocess_create_func(const subprocess_func_t* proc_def,
@@ -162,16 +172,17 @@ int subprocess_create_func(const subprocess_func_t* proc_def,
 
     if (make_pipes((subprocess_pipe_def_t*)proc_def,
                    stdin_pipe, stdout_pipe, stderr_pipe)) {
-        return 1;
+        result = SUBPROCESS_PIPE_NORMAL;
+        goto error;
     }
     if (make_sharedmem(proc_def, &sharedmem, &sharedmem_size)) {
-        result = 2;
+        result = SUBPROCESS_CREATE_ERROR_SHAREDMEM;
         goto error;
     }
 
     pid_t pid = fork();
     if (pid < 0) {
-        result = 3;
+        result = SUBPROCESS_CREATE_ERROR_FORK;
         goto error;
     }
     if (0 == pid) {
@@ -179,12 +190,12 @@ int subprocess_create_func(const subprocess_func_t* proc_def,
         child_pipes((subprocess_pipe_def_t*)proc_def,
                     stdin_pipe, stdout_pipe, stderr_pipe);
 
-        subprocess_func_ctx_t context = {
-                .param = proc_def->param,
-                .param_size = proc_def->param_size,
-                .sharedmem = sharedmem,
-                .sharedmem_size = sharedmem_size
-        };
+        subprocess_func_ctx_t context = {0};
+        context.param = proc_def->param;
+        context.param_size = proc_def->param_size;
+        context.sharedmem = sharedmem;
+        context.sharedmem_size = sharedmem_size;
+
         int exit_code = proc_def->entry_point(&context);
         exit(exit_code);
     } else {
