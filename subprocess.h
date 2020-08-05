@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define SUBPROCESS_CREATE_ERROR_PIPE (1)
 #define SUBPROCESS_CREATE_ERROR_FORK (2)
@@ -10,20 +11,13 @@
 #define SUBPROCESS_WAIT_EXIT_SIGNAL (1)
 #define SUBPROCESS_WAIT_NO_CHILD (2)
 
-typedef enum {
-    SUBPROCESS_PIPE_NONE = 0,
-    SUBPROCESS_PIPE_NORMAL
-} subprocess_pipe_t;
-
-typedef enum {
-    SUBPROCESS_SHAREDMEM_NONE = 0,
-    SUBPROCESS_SHAREDMEM_ANONYMOUS
-} subprocess_sharedmem_t;
+#define SUBPROCESS_OPTION_PIPE_STDIN (1 << 0)
+#define SUBPROCESS_OPTION_PIPE_STDOUT (1 << 1)
+#define SUBPROCESS_OPTION_PIPE_STDERR (1 << 2)
+#define SUBPROCESS_OPTION_SHAREDMEM_ANON (1 << 3)
 
 typedef struct {
-    subprocess_pipe_t stdin_pipe;
-    subprocess_pipe_t stdout_pipe;
-    subprocess_pipe_t stderr_pipe;
+    int options;
 
     char* path;
     char** argv;
@@ -41,11 +35,8 @@ typedef struct {
 typedef int (*subprocess_main_t)(const subprocess_func_ctx_t*);
 
 typedef struct {
-    subprocess_pipe_t stdin_pipe;
-    subprocess_pipe_t stdout_pipe;
-    subprocess_pipe_t stderr_pipe;
+    uint32_t options;
 
-    subprocess_sharedmem_t sharedmem;
     size_t sharedmem_size;
 
     subprocess_main_t entry_point;

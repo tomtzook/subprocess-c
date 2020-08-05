@@ -14,11 +14,10 @@
 #define FD_STDOUT (1)
 #define FD_STDERR (2)
 
-typedef struct {
-    subprocess_pipe_t stdin_pipe;
-    subprocess_pipe_t stdout_pipe;
-    subprocess_pipe_t stderr_pipe;
-} subprocess_pipe_def_t;
+#define OP_IS_PIPE_STDIN(op) (((op) & SUBPROCESS_OPTION_PIPE_STDIN) != 0)
+#define OP_IS_PIPE_STDOUT(op) (((op) & SUBPROCESS_OPTION_PIPE_STDOUT) != 0)
+#define OP_IS_PIPE_STDERR(op) (((op) & SUBPROCESS_OPTION_PIPE_STDERR) != 0)
+#define OP_IS_SHAREDMEM(op) (((op) & SUBPROCESS_OPTION_SHAREDMEM_ANON) != 0)
 
 
 static void close_pipe(int* pipe) {
@@ -26,21 +25,21 @@ static void close_pipe(int* pipe) {
     close(pipe[1]);
 }
 
-static int make_pipes(const subprocess_pipe_def_t* proc_def,
+static int make_pipes(int options,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
-    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdin_pipe) {
+    if (OP_IS_PIPE_STDIN(options)) {
         if (-1 == pipe(stdin_pipe)) {
             goto error;
         }
     }
 
-    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdout_pipe) {
+    if (OP_IS_PIPE_STDOUT(options)) {
         if (-1 == pipe(stdout_pipe)) {
             goto error;
         }
     }
 
-    if (SUBPROCESS_PIPE_NORMAL == proc_def->stderr_pipe) {
+    if (OP_IS_PIPE_STDERR(options)) {
         if (-1 == pipe(stderr_pipe)) {
             goto error;
         }
@@ -54,40 +53,40 @@ static int make_pipes(const subprocess_pipe_def_t* proc_def,
     return 1;
 }
 
-static void child_pipes(const subprocess_pipe_def_t* proc_def,
+static void child_pipes(int options,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
-    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdin_pipe) {
+    if (OP_IS_PIPE_STDIN(options)) {
         close(stdin_pipe[PIPE_WRITE]);
         dup2(stdin_pipe[PIPE_READ], FD_STDIN);
     }
-    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdout_pipe) {
+    if (OP_IS_PIPE_STDOUT(options)) {
         close(stdout_pipe[PIPE_READ]);
         dup2(stdout_pipe[PIPE_WRITE], FD_STDOUT);
     }
-    if (SUBPROCESS_PIPE_NORMAL == proc_def->stderr_pipe) {
+    if (OP_IS_PIPE_STDERR(options)) {
         close(stderr_pipe[PIPE_READ]);
         // TODO: handle dup2 errors
         dup2(stderr_pipe[PIPE_WRITE], FD_STDERR);
     }
 }
 
-static void parent_pipes(const subprocess_pipe_def_t* proc_def, subprocess_run_t* proc_run,
+static void parent_pipes(int options, subprocess_run_t* proc_run,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
-    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdin_pipe) {
+    if (OP_IS_PIPE_STDIN(options)) {
         close(stdin_pipe[PIPE_READ]);
         proc_run->stdin_fd = stdin_pipe[PIPE_WRITE];
     } else {
         proc_run->stdin_fd = -1;
     }
 
-    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdout_pipe) {
+    if (OP_IS_PIPE_STDOUT(options)) {
         close(stdout_pipe[PIPE_WRITE]);
         proc_run->stdout_fd = stdout_pipe[PIPE_READ];
     } else {
         proc_run->stdout_fd = -1;
     }
 
-    if (SUBPROCESS_PIPE_NORMAL == proc_def->stderr_pipe) {
+    if (OP_IS_PIPE_STDERR(options)) {
         close(stderr_pipe[PIPE_WRITE]);
         proc_run->stderr_fd = stderr_pipe[PIPE_READ];
     } else {
@@ -96,7 +95,7 @@ static void parent_pipes(const subprocess_pipe_def_t* proc_def, subprocess_run_t
 }
 
 static int make_sharedmem(const subprocess_func_t* proc_def, void** mem_ptr, size_t* mem_size) {
-    if (SUBPROCESS_SHAREDMEM_ANONYMOUS == proc_def->sharedmem) {
+    if (OP_IS_SHAREDMEM(proc_def->options)) {
         void* mem = mmap(NULL, proc_def->sharedmem_size, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
         if (NULL == mem) {
             return 1;
@@ -122,7 +121,7 @@ int subprocess_create(const subprocess_def_t* proc_def,
     int stdout_pipe[2] = {0};
     int stderr_pipe[2] = {0};
 
-    if (make_pipes((subprocess_pipe_def_t*)proc_def,
+    if (make_pipes(proc_def->options,
                    stdin_pipe, stdout_pipe, stderr_pipe)) {
         result = SUBPROCESS_CREATE_ERROR_PIPE;
         goto error;
@@ -135,7 +134,7 @@ int subprocess_create(const subprocess_def_t* proc_def,
     }
     if (0 == pid) {
         // child
-        child_pipes((subprocess_pipe_def_t*)proc_def,
+        child_pipes(proc_def->options,
                     stdin_pipe, stdout_pipe, stderr_pipe);
 
         execve(proc_def->path, proc_def->argv, proc_def->envp);
@@ -144,7 +143,7 @@ int subprocess_create(const subprocess_def_t* proc_def,
         // parent
         proc_run->pid = pid;
 
-        parent_pipes((subprocess_pipe_def_t*)proc_def, proc_run,
+        parent_pipes(proc_def->options, proc_run,
                      stdin_pipe, stdout_pipe, stderr_pipe);
     }
 
@@ -170,7 +169,7 @@ int subprocess_create_func(const subprocess_func_t* proc_def,
     void* sharedmem = NULL;
     size_t sharedmem_size = 0;
 
-    if (make_pipes((subprocess_pipe_def_t*)proc_def,
+    if (make_pipes(proc_def->options,
                    stdin_pipe, stdout_pipe, stderr_pipe)) {
         result = SUBPROCESS_CREATE_ERROR_PIPE;
         goto error;
@@ -187,7 +186,7 @@ int subprocess_create_func(const subprocess_func_t* proc_def,
     }
     if (0 == pid) {
         // child
-        child_pipes((subprocess_pipe_def_t*)proc_def,
+        child_pipes(proc_def->options,
                     stdin_pipe, stdout_pipe, stderr_pipe);
 
         subprocess_func_ctx_t context = {0};
@@ -204,7 +203,7 @@ int subprocess_create_func(const subprocess_func_t* proc_def,
         proc_run->sharedmem = sharedmem;
         proc_run->sharedmem_size = sharedmem_size;
 
-        parent_pipes((subprocess_pipe_def_t*)proc_def, proc_run,
+        parent_pipes(proc_def->options, proc_run,
                      stdin_pipe, stdout_pipe, stderr_pipe);
     }
 

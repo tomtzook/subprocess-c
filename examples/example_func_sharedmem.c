@@ -17,10 +17,11 @@ int in_new_proc(const subprocess_func_ctx_t* ctx) {
 int main(int argc, char** argv) {
     char buffer[MEM_SIZE];
 
-    subprocess_func_t def = {0};
-    def.entry_point = in_new_proc;
-    def.sharedmem = SUBPROCESS_SHAREDMEM_ANONYMOUS;
-    def.sharedmem_size = MEM_SIZE;
+    subprocess_func_t def = {
+            .entry_point = in_new_proc,
+            .options = SUBPROCESS_OPTION_SHAREDMEM_ANON,
+            .sharedmem_size = MEM_SIZE
+    };
 
     subprocess_run_t proc;
 

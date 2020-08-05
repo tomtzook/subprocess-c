@@ -6,11 +6,11 @@ target_link_libraries(subprocess_example_func subprocess)
 add_executable(subprocess_example_func_sharedmem example_func_sharedmem.c)
 target_link_libraries(subprocess_example_func_sharedmem subprocess)
 
-add_executable(subprocess_example_shell example_echo.c)
-target_link_libraries(subprocess_example_shell subprocess)
+add_executable(subprocess_example_echo example_echo.c)
+target_link_libraries(subprocess_example_echo subprocess)
 
-add_executable(subprocess_example_shell_stdin example_echo_stdin.c)
-target_link_libraries(subprocess_example_shell_stdin subprocess)
+add_executable(subprocess_example_grep_stdin example_grep_stdin.c)
+target_link_libraries(subprocess_example_grep_stdin subprocess)
 
 add_executable(subprocess_example_communicate example_communicate.c)
 target_link_libraries(subprocess_example_communicate subprocess)

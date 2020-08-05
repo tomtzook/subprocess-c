@@ -11,13 +11,14 @@ int main(int argc, char** argv) {
     char* argv_[] = {"", "hello world", NULL};
     char* envp_[] = {NULL};
 
-    subprocess_def_t def = {0};
-    def.path = "/bin/echo";
-    def.argv = argv_;
-    def.envp = envp_;
-    def.stdin_pipe = SUBPROCESS_PIPE_NONE;
-    def.stdout_pipe = SUBPROCESS_PIPE_NORMAL;
-    def.stderr_pipe = SUBPROCESS_PIPE_NORMAL;
+    subprocess_def_t def = {
+            .path = "/bin/echo",
+            .argv = argv_,
+            .envp = envp_,
+            .options = SUBPROCESS_OPTION_PIPE_STDIN |
+                       SUBPROCESS_OPTION_PIPE_STDOUT |
+                       SUBPROCESS_OPTION_PIPE_STDERR
+    };
 
     subprocess_run_t proc;
 

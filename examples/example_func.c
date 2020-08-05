@@ -22,13 +22,14 @@ int in_new_proc(const subprocess_func_ctx_t* ctx) {
 int main(int argc, char** argv) {
     char buffer[64];
 
-    subprocess_func_t def = {0};
-    def.entry_point = in_new_proc;
-    def.param = "hello world";
-    def.param_size = 12;
-    def.stdin_pipe = SUBPROCESS_PIPE_NORMAL;
-    def.stdout_pipe = SUBPROCESS_PIPE_NORMAL;
-    def.stderr_pipe = SUBPROCESS_PIPE_NORMAL;
+    subprocess_func_t def = {
+            .entry_point = in_new_proc,
+            .param = "hello world",
+            .param_size = 12,
+            .options = SUBPROCESS_OPTION_PIPE_STDIN |
+                    SUBPROCESS_OPTION_PIPE_STDOUT |
+                    SUBPROCESS_OPTION_PIPE_STDERR
+    };
 
     subprocess_run_t proc;
 
