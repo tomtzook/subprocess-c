@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     }
     printf("child process %d\n", proc.pid);
 
-    result = subprocess_kill(&proc, SIGTERM);
+    result = subprocess_signal(&proc, SIGTERM);
     if (result) {
         printf("Failed to kill %d\n", result);
         // kill failed, so we can make grep finish normally

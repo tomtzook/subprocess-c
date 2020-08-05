@@ -263,7 +263,7 @@ int subprocess_communicate(subprocess_run_t* proc_run,
     return 0;
 }
 
-int subprocess_kill(const subprocess_run_t* proc_run, int signal) {
+int subprocess_signal(const subprocess_run_t* proc_run, int signal) {
     if(kill(proc_run->pid, signal)) {
         return errno;
     }

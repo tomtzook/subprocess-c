@@ -66,7 +66,7 @@ int subprocess_communicate(subprocess_run_t* proc_run,
         void* output, size_t output_size, size_t* output_read,
         void* error, size_t error_size, size_t* error_read);
 
-int subprocess_kill(const subprocess_run_t* proc_run, int signal);
+int subprocess_signal(const subprocess_run_t* proc_run, int signal);
 
 int subprocess_wait(const subprocess_run_t* proc_run, int* exit_code);
 
