@@ -6,13 +6,13 @@
 #include "../subprocess.h"
 
 
-int in_new_proc(void* param, size_t size) {
+int in_new_proc(const subprocess_func_ctx_t* ctx) {
     char* line;
     size_t len = 0;
     getline(&line, &len, stdin);
 
     fprintf(stdout, "%s", line);
-    fprintf(stdout, "%s || %ld \n", (char*)param, size);
+    fprintf(stdout, "%s || %ld \n", (char*)ctx->param, ctx->param_size);
 
     free(line);
 
@@ -26,9 +26,9 @@ int main(int argc, char** argv) {
             .entry_point = in_new_proc,
             .param = "hello world",
             .param_size = 12,
-            .stdin_pipe = PIPE,
-            .stdout_pipe = PIPE,
-            .stderr_pipe = PIPE
+            .stdin_pipe = SUBPROCESS_PIPE_NORMAL,
+            .stdout_pipe = SUBPROCESS_PIPE_NORMAL,
+            .stderr_pipe = SUBPROCESS_PIPE_NORMAL
     };
     subprocess_run_t proc;
 

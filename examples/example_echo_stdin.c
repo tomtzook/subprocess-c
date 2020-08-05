@@ -14,9 +14,9 @@ int main(int argc, char** argv) {
             .path = "/bin/grep",
             .argv = argv_,
             .envp = envp_,
-            .stdin_pipe = PIPE,
-            .stdout_pipe = PIPE,
-            .stderr_pipe = PIPE
+            .stdin_pipe = SUBPROCESS_PIPE_NORMAL,
+            .stdout_pipe = SUBPROCESS_PIPE_NORMAL,
+            .stderr_pipe = SUBPROCESS_PIPE_NORMAL
     };
     subprocess_run_t proc;
 

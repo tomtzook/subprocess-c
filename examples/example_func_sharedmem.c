@@ -1,26 +1,35 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <zconf.h>
 #include <string.h>
 
 #include "../subprocess.h"
 
-int main(int argc, char** argv) {
-    char buffer[64];
 
-    char* argv_[] = {"", "hello world", NULL};
-    char* envp_[] = {NULL};
-    subprocess_def_t def = {
-            .path = "/bin/echo",
-            .argv = argv_,
-            .envp = envp_,
+int in_new_proc(const subprocess_func_ctx_t* ctx) {
+    strcpy(ctx->sharedmem, "hello world!");
+
+    return 0;
+}
+
+#define MEM_SIZE (30)
+
+int main(int argc, char** argv) {
+    char buffer[MEM_SIZE];
+
+    subprocess_func_t def = {
+            .entry_point = in_new_proc,
+            .param = NULL,
+            .param_size = 0,
             .stdin_pipe = SUBPROCESS_PIPE_NONE,
-            .stdout_pipe = SUBPROCESS_PIPE_NORMAL,
-            .stderr_pipe = SUBPROCESS_PIPE_NORMAL
+            .stdout_pipe = SUBPROCESS_PIPE_NONE,
+            .stderr_pipe = SUBPROCESS_PIPE_NONE,
+            .sharedmem = SUBPROCESS_SHAREDMEM_ANONYMOUS,
+            .sharedmem_size = MEM_SIZE
     };
     subprocess_run_t proc;
 
-    int result = subprocess_create(&def, &proc);
+    int result = subprocess_create_func(&def, &proc);
     if (result) {
         printf("Error starting subprocess %d\n", result);
         return 1;
@@ -35,15 +44,12 @@ int main(int argc, char** argv) {
         printf("Done waiting for subprocess %d, exit code %d\n", result, exit_code);
     }
 
-    int read_c = read(proc.stdout_fd, buffer, 63);
-    buffer[read_c] = '\0';
-    printf("stdout: %s", buffer);
-
-    read_c = read(proc.stderr_fd, buffer, 63);
-    buffer[read_c] = '\0';
-    printf("stderr: %s", buffer);
+    strcpy(buffer, proc.sharedmem);
+    printf("From child via memory: %s\n", buffer);
 
     subprocess_free(&proc);
     return 0;
 }
+
+
 

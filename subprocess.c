@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <wait.h>
 #include <errno.h>
+#include <string.h>
+#include <sys/mman.h>
 
 #include "subprocess.h"
 
@@ -26,19 +28,19 @@ static void close_pipe(int *pipe) {
 
 static int make_pipes(const subprocess_pipe_def_t* proc_def,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
-    if (PIPE == proc_def->stdin_pipe) {
+    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdin_pipe) {
         if (-1 == pipe(stdin_pipe)) {
             goto error;
         }
     }
 
-    if (PIPE == proc_def->stdout_pipe) {
+    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdout_pipe) {
         if (-1 == pipe(stdout_pipe)) {
             goto error;
         }
     }
 
-    if (PIPE == proc_def->stderr_pipe) {
+    if (SUBPROCESS_PIPE_NORMAL == proc_def->stderr_pipe) {
         if (-1 == pipe(stderr_pipe)) {
             goto error;
         }
@@ -54,15 +56,15 @@ static int make_pipes(const subprocess_pipe_def_t* proc_def,
 
 static void child_pipes(const subprocess_pipe_def_t* proc_def,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
-    if (PIPE == proc_def->stdin_pipe) {
+    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdin_pipe) {
         close(stdin_pipe[PIPE_WRITE]);
         dup2(stdin_pipe[PIPE_READ], FD_STDIN);
     }
-    if (PIPE == proc_def->stdout_pipe) {
+    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdout_pipe) {
         close(stdout_pipe[PIPE_READ]);
         dup2(stdout_pipe[PIPE_WRITE], FD_STDOUT);
     }
-    if (PIPE == proc_def->stderr_pipe) {
+    if (SUBPROCESS_PIPE_NORMAL == proc_def->stderr_pipe) {
         close(stderr_pipe[PIPE_READ]);
         // TODO: handle dup2 errors
         dup2(stderr_pipe[PIPE_WRITE], FD_STDERR);
@@ -71,21 +73,21 @@ static void child_pipes(const subprocess_pipe_def_t* proc_def,
 
 static void parent_pipes(const subprocess_pipe_def_t* proc_def, subprocess_run_t* proc_run,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
-    if (PIPE == proc_def->stdin_pipe) {
+    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdin_pipe) {
         close(stdin_pipe[PIPE_READ]);
         proc_run->stdin_fd = stdin_pipe[PIPE_WRITE];
     } else {
         proc_run->stdin_fd = -1;
     }
 
-    if (PIPE == proc_def->stdout_pipe) {
+    if (SUBPROCESS_PIPE_NORMAL == proc_def->stdout_pipe) {
         close(stdout_pipe[PIPE_WRITE]);
         proc_run->stdout_fd = stdout_pipe[PIPE_READ];
     } else {
         proc_run->stdout_fd = -1;
     }
 
-    if (PIPE == proc_def->stderr_pipe) {
+    if (SUBPROCESS_PIPE_NORMAL == proc_def->stderr_pipe) {
         close(stderr_pipe[PIPE_WRITE]);
         proc_run->stderr_fd = stderr_pipe[PIPE_READ];
     } else {
@@ -93,8 +95,27 @@ static void parent_pipes(const subprocess_pipe_def_t* proc_def, subprocess_run_t
     }
 }
 
-int subprocess_create(const subprocess_def_t *proc_def,
-                      subprocess_run_t *proc_run) {
+static int make_sharedmem(const subprocess_func_t* proc_def, void** mem_ptr, size_t* mem_size) {
+    if (SUBPROCESS_SHAREDMEM_ANONYMOUS == proc_def->sharedmem) {
+        void* mem = mmap(NULL, proc_def->sharedmem_size, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        if (NULL == mem) {
+            return -errno;
+        }
+
+        *mem_ptr = mem;
+        *mem_size = proc_def->sharedmem_size;
+    } else {
+        *mem_ptr = NULL;
+        *mem_size = 0;
+    }
+
+    return 0;
+}
+
+int subprocess_create(const subprocess_def_t* proc_def,
+                      subprocess_run_t* proc_run) {
+    memset(proc_run, 0, sizeof(subprocess_run_t));
+
     int stdin_pipe[2] = {0};
     int stdout_pipe[2] = {0};
     int stderr_pipe[2] = {0};
@@ -126,43 +147,79 @@ int subprocess_create(const subprocess_def_t *proc_def,
     return 0;
 }
 
-int subprocess_create_func(const subprocess_func_t *proc_def,
-                           subprocess_run_t *proc_run) {
+int subprocess_create_func(const subprocess_func_t* proc_def,
+                           subprocess_run_t* proc_run) {
+    memset(proc_run, 0, sizeof(subprocess_run_t));
+
+    int result = 0;
+
     int stdin_pipe[2] = {0};
     int stdout_pipe[2] = {0};
     int stderr_pipe[2] = {0};
+
+    void* sharedmem = NULL;
+    size_t sharedmem_size = 0;
+
     if (make_pipes((subprocess_pipe_def_t*)proc_def,
                    stdin_pipe, stdout_pipe, stderr_pipe)) {
         return 1;
     }
-
+    if (make_sharedmem(proc_def, &sharedmem, &sharedmem_size)) {
+        result = 2;
+        goto error;
+    }
 
     pid_t pid = fork();
     if (pid < 0) {
-        return 2;
+        result = 3;
+        goto error;
     }
     if (0 == pid) {
         // child
         child_pipes((subprocess_pipe_def_t*)proc_def,
                     stdin_pipe, stdout_pipe, stderr_pipe);
 
-        int exit_code = proc_def->entry_point(proc_def->param, proc_def->param_size);
+        subprocess_func_ctx_t context = {
+                .param = proc_def->param,
+                .param_size = proc_def->param_size,
+                .sharedmem = sharedmem,
+                .sharedmem_size = sharedmem_size
+        };
+        int exit_code = proc_def->entry_point(&context);
         exit(exit_code);
     } else {
         // parent
         proc_run->pid = pid;
+        proc_run->sharedmem = sharedmem;
+        proc_run->sharedmem_size = sharedmem_size;
 
         parent_pipes((subprocess_pipe_def_t*)proc_def, proc_run,
                      stdin_pipe, stdout_pipe, stderr_pipe);
     }
 
     return 0;
+error:
+    close_pipe(stdin_pipe);
+    close_pipe(stdout_pipe);
+    close_pipe(stderr_pipe);
+
+    if (NULL != sharedmem) {
+        munmap(sharedmem, sharedmem_size);
+    }
+
+    return result;
 }
 
 void subprocess_free(subprocess_run_t* proc_run) {
     subprocess_close_pipe(&proc_run->stdin_fd);
     subprocess_close_pipe(&proc_run->stdout_fd);
     subprocess_close_pipe(&proc_run->stderr_fd);
+
+    if (NULL != proc_run->sharedmem) {
+        munmap(proc_run->sharedmem, proc_run->sharedmem_size);
+        proc_run->sharedmem = NULL;
+        proc_run->sharedmem_size = 0;
+    }
 }
 
 int subprocess_communicate(subprocess_run_t* proc_run,
