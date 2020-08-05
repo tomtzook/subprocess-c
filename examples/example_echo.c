@@ -10,14 +10,15 @@ int main(int argc, char** argv) {
 
     char* argv_[] = {"", "hello world", NULL};
     char* envp_[] = {NULL};
-    subprocess_def_t def = {
-            .path = "/bin/echo",
-            .argv = argv_,
-            .envp = envp_,
-            .stdin_pipe = SUBPROCESS_PIPE_NONE,
-            .stdout_pipe = SUBPROCESS_PIPE_NORMAL,
-            .stderr_pipe = SUBPROCESS_PIPE_NORMAL
-    };
+
+    subprocess_def_t def = {0};
+    def.path = "/bin/echo";
+    def.argv = argv_;
+    def.envp = envp_;
+    def.stdin_pipe = SUBPROCESS_PIPE_NONE;
+    def.stdout_pipe = SUBPROCESS_PIPE_NORMAL;
+    def.stderr_pipe = SUBPROCESS_PIPE_NORMAL;
+
     subprocess_run_t proc;
 
     int result = subprocess_create(&def, &proc);
