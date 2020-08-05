@@ -21,7 +21,7 @@ typedef struct {
 } subprocess_pipe_def_t;
 
 
-static void close_pipe(int *pipe) {
+static void close_pipe(int* pipe) {
     close(pipe[0]);
     close(pipe[1]);
 }
