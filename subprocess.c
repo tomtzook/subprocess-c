@@ -25,7 +25,7 @@ static void close_pipe(int* pipe) {
     close(pipe[1]);
 }
 
-static int make_pipes(int options,
+static int make_pipes(subprocess_options_t options,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
     if (OP_IS_PIPE_STDIN(options)) {
         if (-1 == pipe(stdin_pipe)) {
@@ -53,7 +53,7 @@ static int make_pipes(int options,
     return 1;
 }
 
-static void child_pipes(int options,
+static void child_pipes(subprocess_options_t options,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
     if (OP_IS_PIPE_STDIN(options)) {
         close(stdin_pipe[PIPE_WRITE]);
@@ -70,7 +70,7 @@ static void child_pipes(int options,
     }
 }
 
-static void parent_pipes(int options, subprocess_run_t* proc_run,
+static void parent_pipes(subprocess_options_t options, subprocess_run_t* proc_run,
         int stdin_pipe[2], int stdout_pipe[2], int stderr_pipe[2]) {
     if (OP_IS_PIPE_STDIN(options)) {
         close(stdin_pipe[PIPE_READ]);

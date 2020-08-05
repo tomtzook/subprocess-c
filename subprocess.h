@@ -16,8 +16,10 @@
 #define SUBPROCESS_OPTION_PIPE_STDERR (1 << 2)
 #define SUBPROCESS_OPTION_SHAREDMEM_ANON (1 << 3)
 
+typedef uint32_t subprocess_options_t;
+
 typedef struct {
-    int options;
+    subprocess_options_t options;
 
     char* path;
     char** argv;
@@ -35,7 +37,7 @@ typedef struct {
 typedef int (*subprocess_main_t)(const subprocess_func_ctx_t*);
 
 typedef struct {
-    uint32_t options;
+    subprocess_options_t options;
 
     size_t sharedmem_size;
 
