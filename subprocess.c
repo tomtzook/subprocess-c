@@ -172,7 +172,7 @@ int subprocess_create_func(const subprocess_func_t* proc_def,
 
     if (make_pipes((subprocess_pipe_def_t*)proc_def,
                    stdin_pipe, stdout_pipe, stderr_pipe)) {
-        result = SUBPROCESS_PIPE_NORMAL;
+        result = SUBPROCESS_CREATE_ERROR_PIPE;
         goto error;
     }
     if (make_sharedmem(proc_def, &sharedmem, &sharedmem_size)) {
