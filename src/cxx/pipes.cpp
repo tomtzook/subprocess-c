@@ -1,9 +1,8 @@
 
 #include <unistd.h>
-#include <errno.h>
+#include <cerrno>
 
-#include "pipes.h"
-
+#include "cxx/pipes.h"
 
 static constexpr int FD_CLEAR = -1;
 static constexpr int PIPE_READ = 0;

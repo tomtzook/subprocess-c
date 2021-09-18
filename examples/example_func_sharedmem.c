@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <zconf.h>
 #include <string.h>
 
-#include "../subprocess.h"
+#include "subprocess.h"
 
 
 int in_new_proc(const subprocess_func_ctx_t* ctx) {

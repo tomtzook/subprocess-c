@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#include "../../cxx/subprocess.h"
+#include "cxx/subprocess.h"
 
 int main(int argc, char** argv) {
     char buffer[64];

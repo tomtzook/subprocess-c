@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-#include "../../cxx/subprocess.h"
+#include "cxx/subprocess.h"
 
 
 int in_new_proc(const subprocess::Context& ctx) {

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/mman.h>
 
-#include "subprocess.h"
+#include "../include/subprocess.h"
 
 #define PIPE_READ (0)
 #define PIPE_WRITE (1)

@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 
-#include "../subprocess.h"
+#include "subprocess.h"
 
 int main(int argc, char** argv) {
     char* argv_[] = {"", "hello", NULL};
