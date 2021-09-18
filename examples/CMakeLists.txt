@@ -17,3 +17,5 @@ target_link_libraries(subprocess_example_communicate subprocess)
 
 add_executable(subprocess_example_kill example_kill.c)
 target_link_libraries(subprocess_example_kill subprocess)
+
+add_subdirectory(cxx)
