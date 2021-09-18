@@ -27,8 +27,9 @@ enum Options {
 };
 
 struct Context {
-    void* param;
+    const void* param;
     size_t paramSize;
+
     void* sharedmem;
     size_t sharedmemSize;
 };
@@ -68,7 +69,9 @@ private:
     SharedMemory m_sharedMemory;
 };
 
-Subprocess open(char* path, char** argv, char** envp, int options);
-FunctionSubprocess open(EntryPoint entryPoint, int options, void* param, size_t paramSize, size_t sharedMemSize = 0);
+Subprocess open(const char* path, char* const* argv, char* const* envp, int options);
+FunctionSubprocess open(EntryPoint entryPoint, int options,
+                        const void* param = nullptr, size_t paramSize = 0,
+                        size_t sharedMemSize = 0);
 
 }

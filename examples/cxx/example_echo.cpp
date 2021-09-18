@@ -5,8 +5,8 @@
 int main(int argc, char** argv) {
     char buffer[64];
 
-    char* argv_[] = {"", "hello world", NULL};
-    char* envp_[] = {NULL};
+    char* const argv_[] = {"", "hello world", nullptr};
+    char* const envp_[] = {nullptr};
 
     subprocess::Subprocess subprocess = subprocess::open("/bin/echo", argv_, envp_,
                                                          subprocess::OPTION_PIPE_STDOUT |

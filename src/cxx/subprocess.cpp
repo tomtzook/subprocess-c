@@ -141,7 +141,7 @@ static pid_t open(int options, Pipe& stdin, Pipe& stdout, Pipe& stderr) {
     return pid;
 }
 
-Subprocess open(char* path, char** argv, char** envp, int options) {
+Subprocess open(const char* path, char* const* argv, char* const* envp, int options) {
     Pipe stdin;
     Pipe stdout;
     Pipe stderr;
@@ -156,7 +156,9 @@ Subprocess open(char* path, char** argv, char** envp, int options) {
     return Subprocess(pid, stdin, stdout, stderr);
 }
 
-FunctionSubprocess open(EntryPoint entryPoint, int options, void* param, size_t paramSize, size_t sharedMemSize) {
+FunctionSubprocess open(EntryPoint entryPoint, int options,
+                        const void* param, size_t paramSize,
+                        size_t sharedMemSize) {
     Pipe stdin;
     Pipe stdout;
     Pipe stderr;
